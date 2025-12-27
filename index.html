@@ -93,7 +93,62 @@
     }
     .edit-btn { background:#007AFF !important; }
     .delete-btn { background:#FF3B30 !important; }
-    td:last-child, td:nth-last-child(2) { text-align:center; }
+    th:nth-last-child(-n+2), td:nth-last-child(-n+2) { text-align:center; }
+    .history-btn {
+      background:#5856D6 !important;
+      margin-top:12px;
+    }
+    .modal {
+      display:none;
+      position:fixed;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      background:rgba(0,0,0,0.5);
+      z-index:1000;
+      overflow-y:auto;
+      padding:20px;
+    }
+    .modal.show { display:flex; align-items:flex-start; justify-content:center; }
+    .modal-content {
+      background:white;
+      border-radius:16px;
+      padding:20px;
+      max-width:800px;
+      width:100%;
+      margin:40px auto;
+      box-shadow:0 4px 20px rgba(0,0,0,0.2);
+    }
+    .modal-header {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:20px;
+    }
+    .modal-header h2 { margin:0; font-size:22px; }
+    .close-btn {
+      background:#f0f0f0 !important;
+      color:#111 !important;
+      padding:8px 16px !important;
+      font-size:14px !important;
+      width:auto !important;
+    }
+    .day-card {
+      background:#f8f9fa;
+      border-radius:12px;
+      padding:16px;
+      margin-bottom:12px;
+    }
+    .day-card h4 { margin:0 0 12px 0; font-size:16px; color:#111; }
+    .day-stats {
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));
+      gap:8px;
+      font-size:14px;
+    }
+    .stat-item { padding:8px; background:white; border-radius:8px; }
+    .stat-item strong { display:block; font-size:16px; color:#111; margin-top:2px; }
     
     @media (max-width: 480px) {
       body { padding:12px; }
@@ -110,17 +165,10 @@
 
   <div class="card">
     <form id="txForm">
-      <div class="two-col">
-        <div class="input-with-btn">
-          <label>Amount To Pay</label>
-          <input type="number" id="amountDue" placeholder="0" required />
-          <button type="button" class="zero-btn" onclick="addZeros('amountDue')">+000</button>
-        </div>
-        <div class="input-with-btn">
-          <label>Amount Received</label>
-          <input type="number" id="amountPaid" placeholder="0" required />
-          <button type="button" class="zero-btn" onclick="addZeros('amountPaid')">+000</button>
-        </div>
+      <div class="input-with-btn">
+        <label>Amount To Pay</label>
+        <input type="number" id="amountDue" placeholder="0" required />
+        <button type="button" class="zero-btn" onclick="addZeros('amountDue')">+000</button>
       </div>
       <label>Note (optional)</label>
       <input type="text" id="note" placeholder="Item / reason" />
@@ -134,8 +182,17 @@
     <div class="summary-grid">
       <div class="pill">Transactions<br><strong id="sumCount">0</strong></div>
       <div class="pill">Total Due<br><strong id="sumDue">0</strong> IQD</div>
-      <div class="pill">Total Paid<br><strong id="sumPaid">0</strong> IQD</div>
-      <div class="pill">Change Returned<br><strong id="sumChange">0</strong> IQD</div>
+    </div>
+    <button class="history-btn" onclick="showHistory()">View History</button>
+  </div>
+
+  <div id="historyModal" class="modal" onclick="closeHistoryOnOutside(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Daily History</h2>
+        <button class="close-btn" onclick="closeHistory()">Close</button>
+      </div>
+      <div id="historyContent"></div>
     </div>
   </div>
 
@@ -147,8 +204,6 @@
           <tr>
             <th>Time</th>
             <th>Due (IQD)</th>
-            <th>Paid (IQD)</th>
-            <th>Change (IQD)</th>
             <th>Note</th>
             <th>Edit</th>
             <th>Delete</th>
@@ -169,6 +224,14 @@
       const currentValue = field.value || "0";
       field.value = currentValue + "000";
     }
+
+    // Add Tab key listener for amountDue field
+    document.getElementById("amountDue").addEventListener("keydown", function(e) {
+      if (e.key === "Tab") {
+        e.preventDefault();
+        addZeros("amountDue");
+      }
+    });
 
     function loadTx() {
       try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; }
@@ -199,7 +262,6 @@
       const tx = list.find(t => t.id === id);
       if (tx) {
         document.getElementById("amountDue").value = tx.amountDue;
-        document.getElementById("amountPaid").value = tx.amountPaid;
         document.getElementById("note").value = tx.note || "";
         editingId = id;
         document.querySelector("#txForm button[type='submit']").textContent = "Update Transaction";
@@ -211,7 +273,6 @@
     function cancelEdit() {
       editingId = null;
       document.getElementById("amountDue").value = "";
-      document.getElementById("amountPaid").value = "";
       document.getElementById("note").value = "";
       document.querySelector("#txForm button[type='submit']").textContent = "Add Transaction";
       document.getElementById("changeInfo").textContent = "";
@@ -221,7 +282,7 @@
       const list = loadTx();
       txBody.innerHTML = "";
 
-      let sumCount = 0, sumDue = 0, sumPaid = 0, sumChange = 0;
+      let sumCount = 0, sumDue = 0;
 
       list.slice().reverse().forEach(tx => {
         const tr = document.createElement("tr");
@@ -229,8 +290,6 @@
         tr.innerHTML = `
           <td>${new Date(tx.time).toLocaleString()}</td>
           <td>${tx.amountDue}</td>
-          <td>${tx.amountPaid}</td>
-          <td>${tx.change}</td>
           <td>${tx.note || ""}</td>
           <td><button onclick="editTx(${tx.id})" class="action-btn edit-btn">Edit</button></td>
           <td><button onclick="deleteTx(${tx.id})" class="action-btn delete-btn">Delete</button></td>`;
@@ -239,26 +298,20 @@
         if (isToday(tx.time)) {
           sumCount += 1;
           sumDue += tx.amountDue;
-          sumPaid += tx.amountPaid;
-          sumChange += tx.change;
         }
       });
 
       document.getElementById("sumCount").textContent = sumCount;
       document.getElementById("sumDue").textContent = sumDue;
-      document.getElementById("sumPaid").textContent = sumPaid;
-      document.getElementById("sumChange").textContent = sumChange;
     }
 
     document.getElementById("txForm").addEventListener("submit", function(e) {
       e.preventDefault();
       const amountDue = Number(document.getElementById("amountDue").value || 0);
-      const amountPaid = Number(document.getElementById("amountPaid").value || 0);
       const note = document.getElementById("note").value.trim();
 
-      const change = amountPaid - amountDue;
       const info = document.getElementById("changeInfo");
-      info.textContent = `Change: ${change} IQD`;
+      info.textContent = `Amount: ${amountDue} IQD`;
 
       const list = loadTx();
       
@@ -269,8 +322,6 @@
           list[index] = {
             ...list[index],
             amountDue,
-            amountPaid,
-            change,
             note
           };
         }
@@ -282,8 +333,8 @@
           id: Date.now(),
           time: new Date().toISOString(),
           amountDue,
-          amountPaid,
-          change,
+          amountPaid: 0,
+          change: 0,
           note
         });
       }
@@ -292,9 +343,78 @@
       render();
 
       document.getElementById("amountDue").value = "";
-      document.getElementById("amountPaid").value = "";
       document.getElementById("note").value = "";
     });
+
+    function showHistory() {
+      const list = loadTx();
+      const historyContent = document.getElementById("historyContent");
+      
+      if (list.length === 0) {
+        historyContent.innerHTML = '<p style="text-align:center;color:#666;padding:20px;">No transactions yet.</p>';
+        document.getElementById("historyModal").classList.add("show");
+        return;
+      }
+      
+      // Group transactions by date
+      const groupedByDate = {};
+      list.forEach(tx => {
+        const date = new Date(tx.time);
+        const dateKey = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        
+        if (!groupedByDate[dateKey]) {
+          groupedByDate[dateKey] = {
+            date: date,
+            transactions: [],
+            count: 0,
+            totalDue: 0
+          };
+        }
+        
+        groupedByDate[dateKey].transactions.push(tx);
+        groupedByDate[dateKey].count += 1;
+        groupedByDate[dateKey].totalDue += tx.amountDue;
+      });
+      
+      // Sort by date descending
+      const sortedDates = Object.keys(groupedByDate).sort((a, b) => {
+        return groupedByDate[b].date - groupedByDate[a].date;
+      });
+      
+      // Build HTML
+      let html = '';
+      sortedDates.forEach(dateKey => {
+        const day = groupedByDate[dateKey];
+        html += `
+          <div class="day-card">
+            <h4>${dateKey}</h4>
+            <div class="day-stats">
+              <div class="stat-item">
+                <span>Transactions</span>
+                <strong>${day.count}</strong>
+              </div>
+              <div class="stat-item">
+                <span>Total Due</span>
+                <strong>${day.totalDue} IQD</strong>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      
+      historyContent.innerHTML = html;
+      document.getElementById("historyModal").classList.add("show");
+    }
+    
+    function closeHistory() {
+      document.getElementById("historyModal").classList.remove("show");
+    }
+    
+    function closeHistoryOnOutside(event) {
+      if (event.target.id === "historyModal") {
+        closeHistory();
+      }
+    }
 
     render();
   </script>
