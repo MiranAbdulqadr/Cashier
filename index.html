@@ -225,6 +225,10 @@
       field.value = currentValue + "000";
     }
 
+    function formatNumber(num) {
+      return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
     // Add Tab key listener for amountDue field
     document.getElementById("amountDue").addEventListener("keydown", function(e) {
       if (e.key === "Tab") {
@@ -289,7 +293,7 @@
         tr.className = "row-small";
         tr.innerHTML = `
           <td>${new Date(tx.time).toLocaleString()}</td>
-          <td>${tx.amountDue}</td>
+          <td>${formatNumber(tx.amountDue)}</td>
           <td>${tx.note || ""}</td>
           <td><button onclick="editTx(${tx.id})" class="action-btn edit-btn">Edit</button></td>
           <td><button onclick="deleteTx(${tx.id})" class="action-btn delete-btn">Delete</button></td>`;
@@ -302,7 +306,7 @@
       });
 
       document.getElementById("sumCount").textContent = sumCount;
-      document.getElementById("sumDue").textContent = sumDue;
+      document.getElementById("sumDue").textContent = formatNumber(sumDue);
     }
 
     document.getElementById("txForm").addEventListener("submit", function(e) {
@@ -311,7 +315,7 @@
       const note = document.getElementById("note").value.trim();
 
       const info = document.getElementById("changeInfo");
-      info.textContent = `Amount: ${amountDue} IQD`;
+      info.textContent = `Amount: ${formatNumber(amountDue)} IQD`;
 
       const list = loadTx();
       
@@ -395,7 +399,7 @@
               </div>
               <div class="stat-item">
                 <span>Total Due</span>
-                <strong>${day.totalDue} IQD</strong>
+                <strong>${formatNumber(day.totalDue)} IQD</strong>
               </div>
             </div>
           </div>
