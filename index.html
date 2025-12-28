@@ -168,6 +168,14 @@
     .stat-item { padding:8px; background:white; border-radius:8px; }
     .stat-item strong { display:block; font-size:16px; color:#111; margin-top:2px; }
     
+    .day-0 { background-color: #c1121f; color: white; } /* Sunday - Light Red */
+    .day-1 { background-color: #386641; color: white; } /* Monday - Light Orange */
+    .day-2 { background-color: #ffc300; color: white; } /* Tuesday - Light Yellow */
+    .day-3 { background-color: #7209b7; color: white; } /* Wednesday - Light Green */
+    .day-4 { background-color: #006d77; color: white; } /* Thursday - Light Blue */
+    .day-5 { background-color: #f72585; color: white; } /* Friday - Light Purple */
+    .day-6 { background-color: #03045e; color: white; } /* Saturday - Light Pink */
+    
     @media (max-width: 480px) {
       body { padding:12px; }
       h1 { font-size:22px; }
@@ -188,10 +196,10 @@
         <input type="number" id="amountDue" placeholder="0" required />
       </div>
       <div class="quick-add-btns">
+        <button type="button" class="quick-btn" onclick="addZeros('amountDue')">+000</button>
         <button type="button" class="quick-btn" onclick="addToAmount(250)">+250</button>
         <button type="button" class="quick-btn" onclick="addToAmount(500)">+500</button>
         <button type="button" class="quick-btn" onclick="addToAmount(750)">+750</button>
-        <button type="button" class="quick-btn" onclick="addZeros('amountDue')">+000</button>
       </div>
       <label>Note (optional)</label>
       <input type="text" id="note" placeholder="Item / reason" />
@@ -250,7 +258,7 @@
 
     function addToAmount(value) {
       const field = document.getElementById("amountDue");
-      const currentValue = parseFloat(field.value) || 0;
+      const currentValue = field.value || "";
       field.value = currentValue + value;
     }
 
@@ -319,7 +327,8 @@
 
       list.slice().reverse().forEach(tx => {
         const tr = document.createElement("tr");
-        tr.className = "row-small";
+        const dayOfWeek = new Date(tx.time).getDay();
+        tr.className = `row-small day-${dayOfWeek}`;
         tr.innerHTML = `
           <td>${new Date(tx.time).toLocaleString()}</td>
           <td>${formatNumber(tx.amountDue)}</td>
