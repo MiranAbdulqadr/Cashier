@@ -86,9 +86,7 @@
     .quick-add-btns {
       display:flex;
       gap:8px;
-      position:absolute;
-      right:10px;
-      top:38px;
+      margin-bottom:12px;
     }
     .quick-btn {
       padding:8px 12px;
@@ -188,12 +186,12 @@
       <div class="input-with-btn">
         <label>Amount To Pay</label>
         <input type="number" id="amountDue" placeholder="0" required />
-        <div class="quick-add-btns">
-          <button type="button" class="quick-btn" onclick="addToAmount(250)">+250</button>
-          <button type="button" class="quick-btn" onclick="addToAmount(500)">+500</button>
-          <button type="button" class="quick-btn" onclick="addToAmount(750)">+750</button>
-          <button type="button" class="quick-btn" onclick="addZeros('amountDue')">+000</button>
-        </div>
+      </div>
+      <div class="quick-add-btns">
+        <button type="button" class="quick-btn" onclick="addToAmount(250)">+250</button>
+        <button type="button" class="quick-btn" onclick="addToAmount(500)">+500</button>
+        <button type="button" class="quick-btn" onclick="addToAmount(750)">+750</button>
+        <button type="button" class="quick-btn" onclick="addZeros('amountDue')">+000</button>
       </div>
       <label>Note (optional)</label>
       <input type="text" id="note" placeholder="Item / reason" />
