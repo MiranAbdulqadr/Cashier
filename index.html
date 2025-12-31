@@ -184,6 +184,20 @@
       table { font-size:13px; }
       th, td { padding:10px 6px; }
     }
+    
+    @media (max-width: 926px) and (orientation: landscape) {
+      body { padding:12px; }
+      .quick-add-btns { grid-template-columns:repeat(6, 1fr); gap:6px; }
+      .quick-btn { padding:10px 6px; font-size:13px; }
+      .summary-grid { grid-template-columns:repeat(4, 1fr); }
+      .card { padding:12px; margin-bottom:12px; }
+      h1 { font-size:20px; margin-bottom:12px; }
+      h3 { font-size:16px; margin-bottom:8px; }
+      input { padding:10px; margin-bottom:8px; }
+      button { padding:10px 12px; }
+      table { font-size:12px; }
+      th, td { padding:8px 4px; }
+    }
   </style>
 </head>
 <body>
@@ -204,7 +218,7 @@
         <button type="button" class="quick-btn" onclick="addToAmount(10000)">+10,000</button>
         <button type="button" class="quick-btn" onclick="addToAmount(25000)">+25,000</button>
         <button type="button" class="quick-btn" onclick="addToAmount(50000)">+50,000</button>
-         <button type="button" class="quick-btn" onclick="addZeros('amountDue')">+000</button>
+         <button type="button" class="quick-btn" onclick="resetAmount()" style="background:#FF3B30;">Reset</button>
         <button type="button" class="quick-btn" onclick="addToAmount(250)">+250</button>
         <button type="button" class="quick-btn" onclick="addToAmount(500)">+500</button>
         <button type="button" class="quick-btn" onclick="addToAmount(750)">+750</button>
@@ -265,6 +279,11 @@
       const field = document.getElementById(fieldId);
       const currentValue = field.value || "0";
       field.value = currentValue + "000";
+    }
+
+    function resetAmount() {
+      const field = document.getElementById("amountDue");
+      field.value = "";
     }
 
     function addToAmount(value) {
